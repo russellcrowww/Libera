@@ -20,11 +20,6 @@ class CategoryService:
                 detail=f'Category with id {category_id} not found'
             )
         return CategoryResponse.model_validate(category)
-
-    def get_category_by_genre(self)->list[CategoryResponse]:
-        categories = self.repository.get_all()
-        return [CategoryResponse.model_validate(cat) for cat in categories]
-
     
     def create_category(self, category_data: CategoryCreate) -> CategoryResponse:
         category = self.repository.create(category_data)

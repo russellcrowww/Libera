@@ -12,9 +12,6 @@ class CategoryRepository:
     
     def get_by_id(self, category_id: int) -> Optional[Category]:
         return self.db.query(Category).filter(Category.id == category_id).first()
-    
-    def get_by_genre(self, genre: str) -> Optional[Category]:
-        return self.db.query(Category).filter(Category.genre == genre).first()
 
     def create(self, category_data: CategoryCreate) -> Category:
         db_category = Category(**category_data.model_dump())
