@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from ..database import Base
+from typing import datetime, Text, ForeignKey
 
 class Book(Base):
     __tablename__ = "books"
@@ -12,10 +13,10 @@ class Book(Base):
     year = Column(Integer,nullable=False )
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     image_url = Column(String)
-    Created_at = Column(DateTime, default=datetime.utcnow)
+    Created_at = Column(datetime.DateTime, default=datetime.utcnow)
 
-    category = relationship("Category", back_populates="books")
+    category = relationship("category", back_populates="books")
 
     def __repr__(self):
-        return f"<Product(id={self.id}, name='{self.name}', price={self.author})>"
+        return f"<Book(id={self.id}, name='{self.name}', author={self.author})>"
 
