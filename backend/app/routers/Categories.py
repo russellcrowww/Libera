@@ -3,12 +3,18 @@ from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_db
 from ..services.Category_services import CategoryService
-from ..schemas.Category import CategoryResponse
+from ..schemas.Category import CategoryResponse,CategoryCreate
 
 router = APIRouter(
     prefix="/api/categories",
     tags=['categories']
 )
+
+@router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
+def create_category(category_data: CategoryCreate, db: Session = Depends(get_db)):
+    service = CategoryService(db) 
+    return service.create_category(category_data) 
+
 
 @router.get("", response_model=List[CategoryResponse], status_code=status.HTTP_200_OK)
 def get_categories(db: Session = Depends(get_db)):

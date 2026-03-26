@@ -1,22 +1,24 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text as SQLText
 from sqlalchemy.orm import relationship
+from datetime import datetime     
 from ..database import Base
-from typing import datetime, Text, ForeignKey
 
 class Book(Base):
     __tablename__ = "books"
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False, index=True)
-    description  = Column(Text)
+    description = Column(SQLText) 
     genre = Column(String, nullable=False)
-    author = Column(String,nullable=False)
-    year = Column(Integer,nullable=False )
+    author = Column(String, nullable=False)
+    year = Column(Integer, nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     image_url = Column(String)
-    Created_at = Column(datetime.DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now) 
 
-    category = relationship("category", back_populates="books")
+    category = relationship("Category", back_populates="books")
 
     def __repr__(self):
-        return f"<Book(id={self.id}, name='{self.name}', author={self.author})>"
+        return f"<Book(id={self.id}, name='{self.name}', author='{self.author}')>"
+
 
