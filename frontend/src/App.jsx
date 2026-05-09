@@ -1,53 +1,49 @@
-import { useEffect, useState } from "react";
-import { api } from "./api/clients";
+import { useState } from "react";
 import "./App.css";
+import Sidebar from "./components/Sidebar";
+import BooksPage from "./pages/BooksPage";
+import CategoriesPage from "./pages/CategoriesPage";
+import AddBookModal from "./components/AddBookModal";
+import AddCategoryModal from "./components/AddCategoryModal";
 
 function App() {
-  const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [page, setPage] = useState("books");
+  const [modal, setModal] = useState(null); // "addBook" | "addCategory"
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const response = await api.get("/api/books");
-        setBooks(response.data?.books ?? []);
-      } catch (err) {
-        const message =
-          err?.response?.data?.detail || err?.message || "Failed to load books";
-        setError(String(message));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBooks();
-  }, []);
+  const refresh = () => setRefreshKey((k) => k + 1);
 
   return (
-    <main className="app">
-      <h1>Library Books</h1>
-      <p className="hint">FastAPI: GET /api/books</p>
+    <div className="app-layout">
+      <Sidebar page={page} setPage={setPage} />
+      <main className="app-main">
+        {page === "books" && (
+          <BooksPage
+            key={refreshKey}
+            onAddBook={() => setModal("addBook")}
+          />
+        )}
+        {page === "categories" && (
+          <CategoriesPage
+            key={refreshKey}
+            onAddCategory={() => setModal("addCategory")}
+          />
+        )}
+      </main>
 
-      {loading && <p>Loading...</p>}
-      {error && <p className="error">Error: {error}</p>}
-
-      {!loading && !error && books.length === 0 && <p>No books yet.</p>}
-
-      {!loading && !error && books.length > 0 && (
-        <ul className="book-list">
-          {books.map((book) => (
-            <li key={book.id} className="book-item">
-              <strong>{book.name}</strong>
-              <div>{book.author}</div>
-              <small>
-                {book.genre} • {book.year}
-              </small>
-            </li>
-          ))}
-        </ul>
+      {modal === "addBook" && (
+        <AddBookModal
+          onClose={() => setModal(null)}
+          onCreated={refresh}
+        />
       )}
-    </main>
+      {modal === "addCategory" && (
+        <AddCategoryModal
+          onClose={() => setModal(null)}
+          onCreated={refresh}
+        />
+      )}
+    </div>
   );
 }
 
