@@ -1,6 +1,7 @@
 export default function Sidebar({ page, setPage }) {
   const nav = [
     { id: "books", label: "Книги", icon: "📚" },
+    { id: "categories", label: "Категории", icon: "🗂" },
   ];
 
   return (

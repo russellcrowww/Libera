@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./App.css";
 import Sidebar from "./components/Sidebar";
 import BooksPage from "./pages/BooksPage";
+import CategoriesPage from "./pages/CategoriesPage";
 
 function App() {
   const [page, setPage] = useState("books");
@@ -11,6 +12,7 @@ function App() {
       <Sidebar page={page} setPage={setPage} />
       <main className="app-main">
         {page === "books" && <BooksPage />}
+        {page === "categories" && <CategoriesPage />}
       </main>
     </div>
   );

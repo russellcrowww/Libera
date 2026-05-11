@@ -27,3 +27,19 @@ class CategoryRepository:
         db_category["id"] = self._next_id()
         self.db.categories.insert_one(db_category)
         return db_category
+
+    def update(self, category_id: int, update_data: dict) -> Optional[dict]:
+        updated = self.db.categories.find_one_and_update(
+            {"id": category_id},
+            {"$set": update_data},
+            return_document=ReturnDocument.AFTER,
+            projection={"_id": 0},
+        )
+        return updated
+
+    def delete(self, category_id: int) -> bool:
+        result = self.db.categories.delete_one({"id": category_id})
+        return result.deleted_count > 0
+
+    def count_books(self, category_id: int) -> int:
+        return self.db.books.count_documents({"category_id": category_id})

@@ -1,12 +1,24 @@
-import { useState } from "react";
-import { createCategory } from "../api/clients";
+import { useEffect, useState } from "react";
+import { createCategory, updateCategory } from "../api/clients";
 
 const EMPTY = { name: "", genre: "" };
 
-export default function AddCategoryModal({ onClose, onCreated }) {
+export default function AddCategoryModal({ onClose, onSaved, editingCategory = null }) {
+  const isEdit = Boolean(editingCategory);
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (editingCategory) {
+      setForm({
+        name: editingCategory.name ?? "",
+        genre: editingCategory.genre ?? "",
+      });
+    } else {
+      setForm(EMPTY);
+    }
+  }, [editingCategory]);
 
   const set = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -16,8 +28,12 @@ export default function AddCategoryModal({ onClose, onCreated }) {
     setLoading(true);
     setError("");
     try {
-      await createCategory(form);
-      onCreated?.();
+      if (isEdit) {
+        await updateCategory(editingCategory.id, form);
+      } else {
+        await createCategory(form);
+      }
+      onSaved?.();
       onClose();
     } catch (err) {
       const detail = err?.response?.data?.detail;
@@ -35,8 +51,10 @@ export default function AddCategoryModal({ onClose, onCreated }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Добавить категорию</h3>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <h3>{isEdit ? "Редактировать категорию" : "Добавить категорию"}</h3>
+          <button type="button" className="modal-close" onClick={onClose}>
+            ✕
+          </button>
         </div>
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-row">
@@ -61,9 +79,11 @@ export default function AddCategoryModal({ onClose, onCreated }) {
           {error && <div className="form-error">⚠ {error}</div>}
 
           <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>Отмена</button>
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              Отмена
+            </button>
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? "Сохраняем..." : "Создать"}
+              {loading ? "Сохраняем..." : isEdit ? "Сохранить" : "Создать"}
             </button>
           </div>
         </form>

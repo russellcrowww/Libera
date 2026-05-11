@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field, ConfigDict
 
 class CategoryBase(BaseModel):
@@ -6,6 +8,12 @@ class CategoryBase(BaseModel):
 
 class CategoryCreate(CategoryBase):
     pass
+
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=50)
+    genre: Optional[str] = Field(None, min_length=1, max_length=30)
+
 
 class CategoryResponse(CategoryBase):
     id: int = Field(..., gt=0, description="ID из базы данных")

@@ -535,15 +535,31 @@ input, select, textarea { font-family: inherit; }
   padding-top: 16px;
 }
 
-.reader-modal {
-  max-width: 980px;
+.reader-overlay {
+  align-items: stretch;
+  padding: 10px;
 }
-.reader-controls {
+.reader-modal.reader-modal--wide {
+  max-width: min(98vw, 1280px);
+  width: min(98vw, 1280px);
+  max-height: min(94vh, 920px);
+  height: min(94vh, 920px);
   display: flex;
+  flex-direction: column;
+}
+.reader-modal-header h3 {
+  flex: 1;
+  padding-right: 8px;
+  line-height: 1.25;
+}
+.reader-toolbar {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
-  flex-wrap: wrap;
-  padding: 14px 24px 8px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--cream-border);
+  background: var(--cream-dark);
 }
 .reader-page-control {
   display: flex;
@@ -557,16 +573,86 @@ input, select, textarea { font-family: inherit; }
   border-radius: 6px;
   background: var(--cream);
 }
+.reader-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.reader-toggle input {
+  width: auto;
+  accent-color: var(--brown-mid);
+}
 .reader-counter {
   font-size: 13px;
   color: var(--text-muted);
+  margin-left: auto;
 }
-.reader-content {
+.reader-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.reader-content--fit {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   justify-content: center;
-  max-height: 74vh;
+  align-items: center;
+  padding: 8px 12px 14px;
+}
+.reader-spread {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+.reader-page-sheet {
+  border: 1px solid var(--cream-border);
+  border-radius: 8px;
   overflow: auto;
-  padding: 10px 20px 20px;
+  max-height: 100%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+.reader-single {
+  max-height: 100%;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid var(--cream-border);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-compact {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.danger-outline {
+  color: var(--red-accent);
+  border-color: rgba(139, 46, 46, 0.35);
+}
+.category-card-manage {
+  flex-wrap: wrap;
+  padding-bottom: 44px;
+}
+.category-card-manage .category-card-id {
+  top: auto;
+  bottom: 12px;
+  right: 14px;
+}
+.category-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+  align-items: center;
 }
 
 /* === STATES === */
