@@ -7,7 +7,7 @@ function getCoverColor(id) {
   return COVER_COLORS[id % COVER_COLORS.length];
 }
 
-export default function BookCard({ book }) {
+export default function BookCard({ book, onEdit, onDelete, onRead }) {
   const color = getCoverColor(book.id);
 
   return (
@@ -34,6 +34,25 @@ export default function BookCard({ book }) {
           {book.category && (
             <span className="book-tag book-tag-cat">{book.category.name}</span>
           )}
+        </div>
+        <div className="book-actions">
+          <button
+            className="book-action-btn"
+            onClick={() => onRead?.(book)}
+            disabled={!book.pdf_url}
+            title={book.pdf_url ? "Открыть PDF" : "Сначала загрузите PDF в редактировании книги"}
+          >
+            Читать
+          </button>
+          <button className="book-action-btn" onClick={() => onEdit?.(book)}>
+            Редактировать
+          </button>
+          <button
+            className="book-action-btn danger"
+            onClick={() => onDelete?.(book)}
+          >
+            Удалить
+          </button>
         </div>
       </div>
     </div>

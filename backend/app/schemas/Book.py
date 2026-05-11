@@ -12,11 +12,21 @@ class BookBase(BaseModel):
     year: int = Field(..., gt=0, lt=2100) #
     category_id: int = Field(..., gt=0)
     image_url: Optional[str] = Field(None)
+    pdf_url: Optional[str] = Field(None)
 
 
 class BookCreate(BookBase):
     pass
 
+class BookUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+    genre: Optional[str] = Field(None, min_length=1, max_length=30)
+    author: Optional[str] = Field(None, min_length=1, max_length=50)
+    year: Optional[int] = Field(None, gt=0, lt=2100)
+    category_id: Optional[int] = Field(None, gt=0)
+    image_url: Optional[str] = None
+    pdf_url: Optional[str] = None
 
 class BookResponse(BookBase):
     id: int

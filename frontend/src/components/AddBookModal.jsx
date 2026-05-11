@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { createBook, getCategories } from "../api/clients";
+import {
+  createBook,
+  getCategories,
+  updateBook,
+  uploadBookPdf,
+} from "../api/clients";
 
 const EMPTY = {
   name: "",
@@ -11,9 +16,23 @@ const EMPTY = {
   image_url: "",
 };
 
-export default function AddBookModal({ onClose, onCreated }) {
-  const [form, setForm] = useState(EMPTY);
+export default function AddBookModal({ onClose, onCreated, initialData = null }) {
+  const isEdit = Boolean(initialData);
+  const [form, setForm] = useState(
+    initialData
+      ? {
+          name: initialData.name ?? "",
+          author: initialData.author ?? "",
+          genre: initialData.genre ?? "",
+          year: initialData.year ?? new Date().getFullYear(),
+          description: initialData.description ?? "",
+          category_id: initialData.category_id ?? "",
+          image_url: initialData.image_url ?? "",
+        }
+      : EMPTY
+  );
   const [categories, setCategories] = useState([]);
+  const [pdfFile, setPdfFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -36,7 +55,17 @@ export default function AddBookModal({ onClose, onCreated }) {
         image_url: form.image_url || null,
         description: form.description || null,
       };
-      await createBook(payload);
+      let savedBook;
+      if (isEdit) {
+        const updated = await updateBook(initialData.id, payload);
+        savedBook = updated.data;
+      } else {
+        const created = await createBook(payload);
+        savedBook = created.data;
+      }
+      if (pdfFile && savedBook?.id) {
+        await uploadBookPdf(savedBook.id, pdfFile);
+      }
       onCreated?.();
       onClose();
     } catch (err) {
@@ -55,7 +84,7 @@ export default function AddBookModal({ onClose, onCreated }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Добавить книгу</h3>
+          <h3>{isEdit ? "Редактировать книгу" : "Добавить книгу"}</h3>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
         <form onSubmit={handleSubmit} className="modal-form">
@@ -99,13 +128,26 @@ export default function AddBookModal({ onClose, onCreated }) {
             <label>URL обложки</label>
             <input value={form.image_url} onChange={set("image_url")} placeholder="https://..." />
           </div>
+          <div className="form-row">
+            <label>PDF файл книги</label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)}
+            />
+            {initialData?.pdf_url && !pdfFile && (
+              <small className="form-hint">
+                PDF уже загружен. Выберите новый файл, чтобы заменить.
+              </small>
+            )}
+          </div>
 
           {error && <div className="form-error">⚠ {error}</div>}
 
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onClose}>Отмена</button>
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? "Сохраняем..." : "Добавить"}
+              {loading ? "Сохраняем..." : isEdit ? "Сохранить" : "Добавить"}
             </button>
           </div>
         </form>

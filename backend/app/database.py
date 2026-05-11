@@ -1,23 +1,19 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from pymongo import ASCENDING, MongoClient
+from pymongo.database import Database
 from .config import settings
 
 
-engine = create_engine(
-    settings.database_url, 
-    connect_args={"check_same_thread": False}
-)
+client = MongoClient(settings.db_url)
+db = client[settings.db_name]
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
 
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    yield db
 
 def init_db():
-    Base.metadata.create_all(bind=engine)
+    database: Database = db
+    database.categories.create_index([("id", ASCENDING)], unique=True)
+    database.categories.create_index([("name", ASCENDING)], unique=True)
+    database.books.create_index([("id", ASCENDING)], unique=True)
+    database.books.create_index([("name", ASCENDING)], unique=True)
+    database.books.create_index([("category_id", ASCENDING)])

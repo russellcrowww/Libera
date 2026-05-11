@@ -1,5 +1,4 @@
-from sqlalchemy.orm import Session
-from typing import List
+from pymongo.errors import DuplicateKeyError
 from ..repositories.Category_repositories import CategoryRepository
 from ..schemas.Category import CategoryResponse, CategoryCreate
 from fastapi import HTTPException, status
@@ -22,6 +21,12 @@ class CategoryService:
         return CategoryResponse.model_validate(category)
     
     def create_category(self, category_data: CategoryCreate) -> CategoryResponse:
-        category = self.repository.create(category_data)
+        try:
+            category = self.repository.create(category_data)
+        except DuplicateKeyError:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Category with name '{category_data.name}' already exists",
+            )
         return CategoryResponse.model_validate(category)
     

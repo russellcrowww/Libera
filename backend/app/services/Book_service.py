@@ -1,17 +1,34 @@
-from sqlalchemy.orm import Session
-from typing import List
+from pymongo.errors import DuplicateKeyError
+from pathlib import Path
 from ..repositories.Book_repository import BookRepository
 from ..repositories.Category_repositories import CategoryRepository 
-from ..schemas.Book import BookResponse, BookCreate, BookListResponse
+from ..schemas.Book import BookResponse, BookCreate, BookListResponse, BookUpdate
+from ..config import settings
 from fastapi import HTTPException, status
 
 class BookService:
-    def __init__(self, db: Session):
+    def __init__(self, db):
         self.category_repository = CategoryRepository(db)
         self.book_repository = BookRepository(db)
     
-    def get_all_books(self) -> BookListResponse:
-        books = self.book_repository.get_all()
+    def get_all_books(
+        self,
+        genre: str | None = None,
+        author: str | None = None,
+        query: str | None = None,
+        category_id: int | None = None,
+    ) -> BookListResponse:
+        has_filters = any([genre, author, query, category_id])
+        books = (
+            self.book_repository.get_filtered(
+                genre=genre,
+                author=author,
+                query=query,
+                category_id=category_id,
+            )
+            if has_filters
+            else self.book_repository.get_all()
+        )
         books_response = [BookResponse.model_validate(b) for b in books]
         return BookListResponse(books=books_response, total=len(books_response))
     
@@ -44,7 +61,75 @@ class BookService:
                 detail=f"Category with id {book_data.category_id} does not exist"
             )
 
-        new_book = self.book_repository.create(book_data)
+        try:
+            new_book = self.book_repository.create(book_data)
+        except DuplicateKeyError:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Book with name '{book_data.name}' already exists",
+            )
         return BookResponse.model_validate(new_book)
+
+    def update_book(self, book_id: int, book_data: BookUpdate) -> BookResponse:
+        exists = self.book_repository.get_by_id(book_id)
+        if not exists:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Book with id {book_id} not found",
+            )
+
+        payload = book_data.model_dump(exclude_none=True)
+        if "category_id" in payload:
+            category = self.category_repository.get_by_id(payload["category_id"])
+            if not category:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Category with id {payload['category_id']} does not exist",
+                )
+
+        if not payload:
+            return BookResponse.model_validate(exists)
+
+        try:
+            updated_book = self.book_repository.update(book_id, payload)
+        except DuplicateKeyError:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Book with this name already exists",
+            )
+
+        return BookResponse.model_validate(updated_book)
+
+    def delete_book(self, book_id: int) -> None:
+        book = self.book_repository.get_by_id(book_id)
+        if not book:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Book with id {book_id} not found",
+            )
+
+        pdf_url = book.get("pdf_url")
+        if pdf_url and pdf_url.startswith("/static/pdfs/"):
+            pdf_name = pdf_url.replace("/static/pdfs/", "", 1)
+            pdf_path = Path(settings.pdfs_dir) / pdf_name
+            if pdf_path.exists():
+                pdf_path.unlink(missing_ok=True)
+
+        deleted = self.book_repository.delete(book_id)
+        if not deleted:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Book with id {book_id} not found",
+            )
+
+    def set_book_pdf(self, book_id: int, pdf_url: str) -> BookResponse:
+        exists = self.book_repository.get_by_id(book_id)
+        if not exists:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Book with id {book_id} not found",
+            )
+        updated_book = self.book_repository.update(book_id, {"pdf_url": pdf_url})
+        return BookResponse.model_validate(updated_book)
 
     

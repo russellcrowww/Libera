@@ -240,6 +240,28 @@ input, select, textarea { font-family: inherit; }
   border-color: var(--brown-mid);
 }
 
+.filters-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.search-input,
+.filter-select {
+  padding: 9px 12px;
+  border: 1px solid var(--cream-border);
+  border-radius: var(--radius);
+  background: var(--parchment);
+  color: var(--text-main);
+  font-size: 14px;
+}
+.search-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: var(--brown-light);
+  box-shadow: 0 0 0 3px rgba(158,107,59,0.12);
+}
+
 /* === BOOKS GRID === */
 .books-grid {
   display: grid;
@@ -329,6 +351,31 @@ input, select, textarea { font-family: inherit; }
   background: var(--green-light);
   color: var(--green-lib);
   border-color: #c2d9be;
+}
+.book-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.book-action-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--cream-border);
+  background: var(--cream);
+  color: var(--brown-mid);
+  font-size: 12px;
+  font-weight: 600;
+}
+.book-action-btn:hover {
+  border-color: var(--brown-pale);
+}
+.book-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.book-action-btn.danger {
+  color: var(--red-accent);
+  border-color: rgba(139,46,46,0.3);
 }
 
 /* === CATEGORIES GRID === */
@@ -474,6 +521,10 @@ input, select, textarea { font-family: inherit; }
   border-radius: var(--radius);
   padding: 8px 12px;
 }
+.form-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+}
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -482,6 +533,40 @@ input, select, textarea { font-family: inherit; }
   border-top: 1px solid var(--cream-border);
   margin-top: 4px;
   padding-top: 16px;
+}
+
+.reader-modal {
+  max-width: 980px;
+}
+.reader-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 14px 24px 8px;
+}
+.reader-page-control {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.reader-page-control input {
+  width: 86px;
+  padding: 8px 10px;
+  border: 1px solid var(--cream-border);
+  border-radius: 6px;
+  background: var(--cream);
+}
+.reader-counter {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.reader-content {
+  display: flex;
+  justify-content: center;
+  max-height: 74vh;
+  overflow: auto;
+  padding: 10px 20px 20px;
 }
 
 /* === STATES === */
@@ -522,6 +607,7 @@ input, select, textarea { font-family: inherit; }
   .app-main { margin-left: 0; }
   .page { padding: 20px 16px; }
   .books-grid { grid-template-columns: 1fr; }
+  .filters-row { grid-template-columns: 1fr; }
   .form-2col { grid-template-columns: 1fr; }
   .page-header { flex-direction: column; align-items: stretch; }
 }
