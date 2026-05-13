@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # 1. СЕРВИС БАЗЫ ДАННЫХ (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    container_name: libera_postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-libera_user}
+      POSTGRES_PASSWORD: ${DB_PASS:-secure_password_123}
+      POSTGRES_DB: libera_database
+    ports:
+      - "5432:5432"
+    # Добавляем healthcheck: Docker будет проверять, принимает ли база подключения
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s     # Как часто проверять (каждые 5 секунд)
+      timeout: 5s      # Сколько ждать ответа
+      retries: 5       # Сколько попыток сделать, прежде чем признать контейнер «больным»
+      start_period: 5s # Время на первоначальный запуск, когда проверки не учитываются
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. СЕРВИС БЭКЕНДА (FastAPI)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: libera_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_USER=${DB_USER:-libera_user}
+      - DB_PASS=${DB_PASS:-secure_password_123}
+      - DB_URL=postgresql://${DB_USER:-libera_user}:${DB_PASS:-secure_password_123}@db:5432/libera_database
+      - DB_NAME=libera_database
+      - db_name=libera_database
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3. СЕРВИС ФРОНТЕНДА (React + Vite)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: libera_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:

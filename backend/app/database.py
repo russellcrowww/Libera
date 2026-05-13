@@ -1,19 +1,34 @@
-from pymongo import ASCENDING, MongoClient
-from pymongo.database import Database
+from sqlalchemy import create_engine
 from .config import settings
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+# 1. Получаем URL подключения из ваших настроек.
+# Формат db_url должен быть: postgresql://username:password@localhost:5432/db_name
+DATABASE_URL = settings.db_url
+
+# 2. Создаем движок (engine) для управления подключениями
+engine = create_engine(DATABASE_URL)
+
+# 3. Создаем фабрику сессий для обработки запросов к БД
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# 4. Базовый класс для будущих моделей (таблиц)
+Base = declarative_base()
 
 
-client = MongoClient(settings.db_url)
-db = client[settings.db_name]
-
-
+# 5. Функция-генератор для получения сессии (вместо старого get_db)
 def get_db():
-    yield db
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
+
+# 6. Функция инициализации базы данных (создание таблиц и индексов)
 def init_db():
-    database: Database = db
-    database.categories.create_index([("id", ASCENDING)], unique=True)
-    database.categories.create_index([("name", ASCENDING)], unique=True)
-    database.books.create_index([("id", ASCENDING)], unique=True)
-    database.books.create_index([("name", ASCENDING)], unique=True)
-    database.books.create_index([("category_id", ASCENDING)])
+    # Импортируйте ваши модели SQLAlchemy здесь перед вызовом create_all,
+    # чтобы SQLAlchemy "узнала" о существовании ваших таблиц.
+    # от app.models import Book, Category
+
+    Base.metadata.create_all(bind=engine)
