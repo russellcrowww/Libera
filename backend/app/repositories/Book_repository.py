@@ -1,50 +1,46 @@
-# репозиторий решает, какие книги достать (фильтрация)
-
 from typing import List, Optional
 from datetime import datetime
-from pymongo import ReturnDocument
-from pymongo.database import Database
-from app.schemas.Book import BookCreate 
+
+from sqlalchemy.orm import Session
+from sqlalchemy import or_
+
+from ..models.Book import Book
+from ..schemas.Book import BookCreate
+
 
 class BookRepository:
-    def __init__(self, db: Database):
+    def __init__(self, db: Session):
         self.db = db
 
-    def _next_id(self) -> int:
-        counter = self.db.counters.find_one_and_update(
-            {"_id": "books_id"},
-            {"$inc": {"seq": 1}},
-            upsert=True,
-            return_document=ReturnDocument.AFTER,
+    def get_all(self) -> List[Book]:
+        return self.db.query(Book).order_by(Book.id).all()
+
+    def get_by_id(self, book_id: int) -> Optional[Book]:
+        return self.db.query(Book).filter(Book.id == book_id).first()
+
+    def get_by_category(self, category_id: int) -> List[Book]:
+        return (
+            self.db.query(Book)
+            .filter(Book.category_id == category_id)
+            .order_by(Book.id)
+            .all()
         )
-        return counter["seq"]
 
-    def _attach_category(self, book: dict) -> dict:
-        category = self.db.categories.find_one({"id": book["category_id"]}, {"_id": 0})
-        book["category"] = category
-        return book
+    def get_by_author(self, author_name: str) -> List[Book]:
+        return (
+            self.db.query(Book)
+            .filter(Book.author == author_name)
+            .order_by(Book.id)
+            .all()
+        )
 
-    def get_all(self) -> List[dict]:
-        books = list(self.db.books.find({}, {"_id": 0}).sort("id", 1))
-        return [self._attach_category(book) for book in books]
-    
-    def get_by_id(self, book_id: int) -> Optional[dict]:
-        book = self.db.books.find_one({"id": book_id}, {"_id": 0})
-        if not book:
-            return None
-        return self._attach_category(book)
-    
-    def get_by_category(self, category_id: int) -> List[dict]:
-        books = list(self.db.books.find({"category_id": category_id}, {"_id": 0}).sort("id", 1))
-        return [self._attach_category(book) for book in books]
-
-    def get_by_author(self, author_name: str) -> List[dict]:
-        books = list(self.db.books.find({"author": author_name}, {"_id": 0}).sort("id", 1))
-        return [self._attach_category(book) for book in books]
-    
-    def get_by_year(self,year_writing: int) -> List[dict]:
-        books = list(self.db.books.find({"year": {"$gte": year_writing}}, {"_id": 0}).sort("id", 1))
-        return [self._attach_category(book) for book in books]
+    def get_by_year(self, year_writing: int) -> List[Book]:
+        return (
+            self.db.query(Book)
+            .filter(Book.year >= year_writing)
+            .order_by(Book.id)
+            .all()
+        )
 
     def get_filtered(
         self,
@@ -52,47 +48,51 @@ class BookRepository:
         author: Optional[str] = None,
         query: Optional[str] = None,
         category_id: Optional[int] = None,
-    ) -> List[dict]:
-        mongo_filter = {}
+    ) -> List[Book]:
+        q = self.db.query(Book)
+
         if category_id:
-            mongo_filter["category_id"] = category_id
+            q = q.filter(Book.category_id == category_id)
         if genre:
-            mongo_filter["genre"] = genre
+            q = q.filter(Book.genre == genre)
         if author:
-            mongo_filter["author"] = author
+            q = q.filter(Book.author == author)
         if query:
-            escaped_query = query.strip()
-            if escaped_query:
-                mongo_filter["$or"] = [
-                    {"name": {"$regex": escaped_query, "$options": "i"}},
-                    {"author": {"$regex": escaped_query, "$options": "i"}},
-                    {"description": {"$regex": escaped_query, "$options": "i"}},
-                ]
+            term = f"%{query.strip()}%"
+            q = q.filter(
+                or_(
+                    Book.name.ilike(term),
+                    Book.author.ilike(term),
+                    Book.description.ilike(term),
+                )
+            )
 
-        books = list(self.db.books.find(mongo_filter, {"_id": 0}).sort("id", 1))
-        return [self._attach_category(book) for book in books]
+        return q.order_by(Book.id).all()
 
-    def create(self, book_data: BookCreate) -> dict:
-        db_book = book_data.model_dump()
-        db_book["id"] = self._next_id()
-        db_book["created_at"] = datetime.utcnow()
-        self.db.books.insert_one(db_book)
-        return self._attach_category(db_book)
-
-    def update(self, book_id: int, update_data: dict) -> Optional[dict]:
-        updated_book = self.db.books.find_one_and_update(
-            {"id": book_id},
-            {"$set": update_data},
-            return_document=ReturnDocument.AFTER,
-            projection={"_id": 0},
+    def create(self, book_data: BookCreate) -> Book:
+        db_book = Book(
+            **book_data.model_dump(),
+            created_at=datetime.utcnow(),
         )
-        if not updated_book:
+        self.db.add(db_book)
+        self.db.commit()
+        self.db.refresh(db_book)
+        return db_book
+
+    def update(self, book_id: int, update_data: dict) -> Optional[Book]:
+        book = self.get_by_id(book_id)
+        if not book:
             return None
-        return self._attach_category(updated_book)
+        for key, value in update_data.items():
+            setattr(book, key, value)
+        self.db.commit()
+        self.db.refresh(book)
+        return book
 
     def delete(self, book_id: int) -> bool:
-        result = self.db.books.delete_one({"id": book_id})
-        return result.deleted_count > 0
-
-
-    
+        book = self.get_by_id(book_id)
+        if not book:
+            return False
+        self.db.delete(book)
+        self.db.commit()
+        return True

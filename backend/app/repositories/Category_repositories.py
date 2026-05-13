@@ -1,45 +1,50 @@
 from typing import List, Optional
-from pymongo import ReturnDocument
-from pymongo.database import Database
-from app.schemas.Category import CategoryCreate 
+
+from sqlalchemy.orm import Session
+
+from ..models.Category import Category
+from ..models.Book import Book
+from ..schemas.Category import CategoryCreate
+
 
 class CategoryRepository:
-    def __init__(self, db: Database):
+    def __init__(self, db: Session):
         self.db = db
 
-    def _next_id(self) -> int:
-        counter = self.db.counters.find_one_and_update(
-            {"_id": "categories_id"},
-            {"$inc": {"seq": 1}},
-            upsert=True,
-            return_document=ReturnDocument.AFTER,
-        )
-        return counter["seq"]
+    def get_all(self) -> List[Category]:
+        return self.db.query(Category).order_by(Category.id).all()
 
-    def get_all(self) -> List[dict]:
-        return list(self.db.categories.find({}, {"_id": 0}).sort("id", 1))
-    
-    def get_by_id(self, category_id: int) -> Optional[dict]:
-        return self.db.categories.find_one({"id": category_id}, {"_id": 0})
+    def get_by_id(self, category_id: int) -> Optional[Category]:
+        return self.db.query(Category).filter(Category.id == category_id).first()
 
-    def create(self, category_data: CategoryCreate) -> dict:
-        db_category = category_data.model_dump()
-        db_category["id"] = self._next_id()
-        self.db.categories.insert_one(db_category)
+    def create(self, category_data: CategoryCreate) -> Category:
+        db_category = Category(**category_data.model_dump())
+        self.db.add(db_category)
+        self.db.commit()
+        self.db.refresh(db_category)
         return db_category
 
-    def update(self, category_id: int, update_data: dict) -> Optional[dict]:
-        updated = self.db.categories.find_one_and_update(
-            {"id": category_id},
-            {"$set": update_data},
-            return_document=ReturnDocument.AFTER,
-            projection={"_id": 0},
-        )
-        return updated
+    def update(self, category_id: int, update_data: dict) -> Optional[Category]:
+        category = self.get_by_id(category_id)
+        if not category:
+            return None
+        for key, value in update_data.items():
+            setattr(category, key, value)
+        self.db.commit()
+        self.db.refresh(category)
+        return category
 
     def delete(self, category_id: int) -> bool:
-        result = self.db.categories.delete_one({"id": category_id})
-        return result.deleted_count > 0
+        category = self.get_by_id(category_id)
+        if not category:
+            return False
+        self.db.delete(category)
+        self.db.commit()
+        return True
 
     def count_books(self, category_id: int) -> int:
-        return self.db.books.count_documents({"category_id": category_id})
+        return (
+            self.db.query(Book)
+            .filter(Book.category_id == category_id)
+            .count()
+        )

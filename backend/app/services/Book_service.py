@@ -1,16 +1,17 @@
-from pymongo.errors import DuplicateKeyError
+from sqlalchemy.exc import IntegrityError
 from pathlib import Path
 from ..repositories.Book_repository import BookRepository
-from ..repositories.Category_repositories import CategoryRepository 
+from ..repositories.Category_repositories import CategoryRepository
 from ..schemas.Book import BookResponse, BookCreate, BookListResponse, BookUpdate
 from ..config import settings
 from fastapi import HTTPException, status
+
 
 class BookService:
     def __init__(self, db):
         self.category_repository = CategoryRepository(db)
         self.book_repository = BookRepository(db)
-    
+
     def get_all_books(
         self,
         genre: str | None = None,
@@ -31,7 +32,7 @@ class BookService:
         )
         books_response = [BookResponse.model_validate(b) for b in books]
         return BookListResponse(books=books_response, total=len(books_response))
-    
+
     def get_book_by_id(self, book_id: int) -> BookResponse:
         book = self.book_repository.get_by_id(book_id)
         if not book:
@@ -48,7 +49,6 @@ class BookService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Category with id {category_id} not found"
             )
-
         books = self.book_repository.get_by_category(category_id)
         books_response = [BookResponse.model_validate(b) for b in books]
         return BookListResponse(books=books_response, total=len(books_response))
@@ -60,10 +60,9 @@ class BookService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Category with id {book_data.category_id} does not exist"
             )
-
         try:
             new_book = self.book_repository.create(book_data)
-        except DuplicateKeyError:
+        except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Book with name '{book_data.name}' already exists",
@@ -92,7 +91,7 @@ class BookService:
 
         try:
             updated_book = self.book_repository.update(book_id, payload)
-        except DuplicateKeyError:
+        except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Book with this name already exists",
@@ -108,7 +107,7 @@ class BookService:
                 detail=f"Book with id {book_id} not found",
             )
 
-        pdf_url = book.get("pdf_url")
+        pdf_url = book.pdf_url
         if pdf_url and pdf_url.startswith("/static/pdfs/"):
             pdf_name = pdf_url.replace("/static/pdfs/", "", 1)
             pdf_path = Path(settings.pdfs_dir) / pdf_name
@@ -131,5 +130,3 @@ class BookService:
             )
         updated_book = self.book_repository.update(book_id, {"pdf_url": pdf_url})
         return BookResponse.model_validate(updated_book)
-
-    
