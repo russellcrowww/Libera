@@ -19,12 +19,10 @@ class Settings(BaseSettings):
 
     static_dir: str = "static"
     images_dir: str = "static/images"
-    pdfs_dir: str = "static/pdfs"
 
     model_config = SettingsConfigDict(env_file="../.env", extra="ignore")
 
 
 os.makedirs("static/images", exist_ok=True)
-os.makedirs("static/pdfs", exist_ok=True)
 
 settings = Settings()

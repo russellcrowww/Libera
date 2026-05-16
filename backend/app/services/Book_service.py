@@ -1,9 +1,7 @@
 from sqlalchemy.exc import IntegrityError
-from pathlib import Path
 from ..repositories.Book_repository import BookRepository
 from ..repositories.Category_repositories import CategoryRepository
 from ..schemas.Book import BookResponse, BookCreate, BookListResponse, BookUpdate
-from ..config import settings
 from fastapi import HTTPException, status
 
 
@@ -63,6 +61,7 @@ class BookService:
         try:
             new_book = self.book_repository.create(book_data)
         except IntegrityError:
+            self.book_repository.db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Book with name '{book_data.name}' already exists",
@@ -92,6 +91,7 @@ class BookService:
         try:
             updated_book = self.book_repository.update(book_id, payload)
         except IntegrityError:
+            self.book_repository.db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Book with this name already exists",
@@ -107,26 +107,9 @@ class BookService:
                 detail=f"Book with id {book_id} not found",
             )
 
-        pdf_url = book.pdf_url
-        if pdf_url and pdf_url.startswith("/static/pdfs/"):
-            pdf_name = pdf_url.replace("/static/pdfs/", "", 1)
-            pdf_path = Path(settings.pdfs_dir) / pdf_name
-            if pdf_path.exists():
-                pdf_path.unlink(missing_ok=True)
-
         deleted = self.book_repository.delete(book_id)
         if not deleted:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Book with id {book_id} not found",
             )
-
-    def set_book_pdf(self, book_id: int, pdf_url: str) -> BookResponse:
-        exists = self.book_repository.get_by_id(book_id)
-        if not exists:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Book with id {book_id} not found",
-            )
-        updated_book = self.book_repository.update(book_id, {"pdf_url": pdf_url})
-        return BookResponse.model_validate(updated_book)

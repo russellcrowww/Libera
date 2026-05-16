@@ -2,7 +2,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
-from app.schemas.Category import CategoryResponse
+from ..schemas.Category import CategoryResponse
 
 class BookBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100) 

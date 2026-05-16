@@ -20,17 +20,7 @@ export const getBooksByCategory = (categoryId) =>
 export const createBook = (data) => api.post("/api/books", data);
 export const updateBook = (id, data) => api.put(`/api/books/${id}`, data);
 export const deleteBook = (id) => api.delete(`/api/books/${id}`);
-export const uploadBookPdf = (id, file) => {
-  const formData = new FormData();
-  formData.append("pdf_file", file);
-  return api.post(`/api/books/${id}/pdf`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-};
 
-// Categories
+// Categories (read-only)
 export const getCategories = () => api.get("/api/categories");
 export const getCategoryById = (id) => api.get(`/api/categories/${id}`);
-export const createCategory = (data) => api.post("/api/categories", data);
-export const updateCategory = (id, data) => api.put(`/api/categories/${id}`, data);
-export const deleteCategory = (id) => api.delete(`/api/categories/${id}`);

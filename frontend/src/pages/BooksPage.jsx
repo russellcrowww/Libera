@@ -7,7 +7,7 @@ import {
 import BookCard from "../components/BookCard";
 import Spinner from "../components/Spinner";
 import AddBookModal from "../components/AddBookModal";
-import BookReaderModal from "../components/BookReaderModal";
+import { getFileUrl } from "../api/clients";
 
 export default function BooksPage() {
   const [books, setBooks] = useState([]);
@@ -18,7 +18,6 @@ export default function BooksPage() {
   const [query, setQuery] = useState("");
   const [modal, setModal] = useState(null);
   const [editingBook, setEditingBook] = useState(null);
-  const [readingBook, setReadingBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -131,6 +130,12 @@ export default function BooksPage() {
     applyFilters();
   };
 
+  const handleRead = (book) => {
+    const url = getFileUrl(book.pdf_url);
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -216,7 +221,7 @@ export default function BooksPage() {
               book={book}
               onEdit={openEditModal}
               onDelete={handleDelete}
-              onRead={setReadingBook}
+              onRead={handleRead}
             />
           ))}
         </div>
@@ -230,9 +235,6 @@ export default function BooksPage() {
         />
       )}
 
-      {readingBook && (
-        <BookReaderModal book={readingBook} onClose={() => setReadingBook(null)} />
-      )}
     </div>
   );
 }

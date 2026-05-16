@@ -1,11 +1,8 @@
-from pathlib import Path
-from uuid import uuid4
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..services.Book_service import BookService
 from ..schemas.Book import BookResponse, BookListResponse, BookCreate, BookUpdate
-from ..config import settings
 
 router = APIRouter(
     prefix="/api/books",
@@ -58,30 +55,3 @@ def update_book(book_id: int, book_data: BookUpdate, db: Session = Depends(get_d
 def delete_book(book_id: int, db: Session = Depends(get_db)):
     service = BookService(db)
     service.delete_book(book_id)
-
-
-@router.post(
-    "/{book_id}/pdf",
-    response_model=BookResponse,
-    status_code=status.HTTP_200_OK,
-)
-async def upload_book_pdf(
-    book_id: int,
-    pdf_file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-):
-    if pdf_file.content_type not in {"application/pdf"}:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only PDF files are allowed",
-        )
-
-    suffix = Path(pdf_file.filename or "book.pdf").suffix or ".pdf"
-    file_name = f"{book_id}-{uuid4().hex}{suffix}"
-    file_path = Path(settings.pdfs_dir) / file_name
-
-    content = await pdf_file.read()
-    file_path.write_bytes(content)
-
-    service = BookService(db)
-    return service.set_book_pdf(book_id, f"/static/pdfs/{file_name}")

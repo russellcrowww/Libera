@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  createBook,
-  getCategories,
-  updateBook,
-  uploadBookPdf,
-} from "../api/clients";
+import { createBook, getCategories, updateBook } from "../api/clients";
 
 const EMPTY = {
   name: "",
@@ -14,6 +9,7 @@ const EMPTY = {
   description: "",
   category_id: "",
   image_url: "",
+  pdf_url: "",
 };
 
 export default function AddBookModal({ onClose, onCreated, initialData = null }) {
@@ -28,11 +24,11 @@ export default function AddBookModal({ onClose, onCreated, initialData = null })
           description: initialData.description ?? "",
           category_id: initialData.category_id ?? "",
           image_url: initialData.image_url ?? "",
+          pdf_url: initialData.pdf_url ?? "",
         }
       : EMPTY
   );
   const [categories, setCategories] = useState([]);
-  const [pdfFile, setPdfFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -54,17 +50,12 @@ export default function AddBookModal({ onClose, onCreated, initialData = null })
         category_id: parseInt(form.category_id, 10),
         image_url: form.image_url || null,
         description: form.description || null,
+        pdf_url: form.pdf_url.trim() || null,
       };
-      let savedBook;
       if (isEdit) {
-        const updated = await updateBook(initialData.id, payload);
-        savedBook = updated.data;
+        await updateBook(initialData.id, payload);
       } else {
-        const created = await createBook(payload);
-        savedBook = created.data;
-      }
-      if (pdfFile && savedBook?.id) {
-        await uploadBookPdf(savedBook.id, pdfFile);
+        await createBook(payload);
       }
       onCreated?.();
       onClose();
@@ -129,17 +120,17 @@ export default function AddBookModal({ onClose, onCreated, initialData = null })
             <input value={form.image_url} onChange={set("image_url")} placeholder="https://..." />
           </div>
           <div className="form-row">
-            <label>PDF файл книги</label>
+            <label>Ссылка на PDF *</label>
             <input
-              type="file"
-              accept="application/pdf"
-              onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)}
+              required={!isEdit}
+              type="url"
+              value={form.pdf_url}
+              onChange={set("pdf_url")}
+              placeholder="https://example.com/book.pdf"
             />
-            {initialData?.pdf_url && !pdfFile && (
-              <small className="form-hint">
-                PDF уже загружен. Выберите новый файл, чтобы заменить.
-              </small>
-            )}
+            <small className="form-hint">
+              При чтении книги откроется эта ссылка в новой вкладке браузера.
+            </small>
           </div>
 
           {error && <div className="form-error">⚠ {error}</div>}

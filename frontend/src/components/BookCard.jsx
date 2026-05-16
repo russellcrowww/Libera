@@ -40,7 +40,7 @@ export default function BookCard({ book, onEdit, onDelete, onRead }) {
             className="book-action-btn"
             onClick={() => onRead?.(book)}
             disabled={!book.pdf_url}
-            title={book.pdf_url ? "Открыть PDF" : "Сначала загрузите PDF в редактировании книги"}
+            title={book.pdf_url ? "Открыть PDF по ссылке" : "Укажите ссылку на PDF при редактировании книги"}
           >
             Читать
           </button>

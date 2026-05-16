@@ -1,9 +1,4 @@
-export default function Sidebar({ page, setPage }) {
-  const nav = [
-    { id: "books", label: "Книги", icon: "📚" },
-    { id: "categories", label: "Категории", icon: "🗂" },
-  ];
-
+export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -15,16 +10,10 @@ export default function Sidebar({ page, setPage }) {
       </div>
 
       <nav className="sidebar-nav">
-        {nav.map((item) => (
-          <button
-            key={item.id}
-            className={`nav-item ${page === item.id ? "active" : ""}`}
-            onClick={() => setPage(item.id)}
-          >
-            <span className="nav-icon">{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        ))}
+        <div className="nav-item active">
+          <span className="nav-icon">📚</span>
+          <span>Книги</span>
+        </div>
       </nav>
 
       <div className="sidebar-footer">
