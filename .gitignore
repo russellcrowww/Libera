@@ -82,3 +82,6 @@ celerybeat-schedule
 celerybeat-schedule-wal
 *.db
 coffetime.db
+
+# Legacy uploaded PDFs (books use external links now)
+backend/static/pdfs/

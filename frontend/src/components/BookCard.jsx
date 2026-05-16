@@ -1,23 +1,28 @@
-const COVER_COLORS = [
-  "#8B5E3C", "#6B7C5B", "#7B6E9E", "#C4956A",
-  "#5B7B8C", "#9E6B6B", "#7B8C5B", "#8C7B5B",
+const COVER_GRADIENTS = [
+  "linear-gradient(135deg, #6366f1, #a855f7)",
+  "linear-gradient(135deg, #06b6d4, #3b82f6)",
+  "linear-gradient(135deg, #f43f5e, #fb923c)",
+  "linear-gradient(135deg, #10b981, #14b8a6)",
+  "linear-gradient(135deg, #8b5cf6, #ec4899)",
+  "linear-gradient(135deg, #f59e0b, #ef4444)",
 ];
 
-function getCoverColor(id) {
-  return COVER_COLORS[id % COVER_COLORS.length];
+function getCoverGradient(id) {
+  return COVER_GRADIENTS[id % COVER_GRADIENTS.length];
 }
 
 export default function BookCard({ book, onEdit, onDelete, onRead }) {
-  const color = getCoverColor(book.id);
+  const gradient = getCoverGradient(book.id);
+  const canRead = Boolean(book.pdf_url);
 
   return (
-    <div className="book-card">
-      <div className="book-spine" style={{ background: color }} />
-      <div className="book-cover" style={{ borderLeftColor: color }}>
+    <article className="book-card">
+      <div className="book-card-accent" style={{ background: gradient }} />
+      <div className="book-cover-wrap">
         {book.image_url ? (
           <img src={book.image_url} alt={book.name} className="book-img" />
         ) : (
-          <div className="book-cover-placeholder" style={{ background: color + "22" }}>
+          <div className="book-cover-placeholder" style={{ background: gradient }}>
             <span className="book-icon">📖</span>
           </div>
         )}
@@ -25,9 +30,7 @@ export default function BookCard({ book, onEdit, onDelete, onRead }) {
       <div className="book-info">
         <h3 className="book-name">{book.name}</h3>
         <p className="book-author">{book.author}</p>
-        {book.description && (
-          <p className="book-desc">{book.description}</p>
-        )}
+        {book.description && <p className="book-desc">{book.description}</p>}
         <div className="book-meta">
           <span className="book-tag">{book.genre}</span>
           <span className="book-tag">{book.year}</span>
@@ -37,17 +40,27 @@ export default function BookCard({ book, onEdit, onDelete, onRead }) {
         </div>
         <div className="book-actions">
           <button
-            className="book-action-btn"
+            type="button"
+            className="book-action-btn book-action-btn--read"
             onClick={() => onRead?.(book)}
-            disabled={!book.pdf_url}
-            title={book.pdf_url ? "Открыть PDF по ссылке" : "Укажите ссылку на PDF при редактировании книги"}
+            disabled={!canRead}
+            title={
+              canRead
+                ? "Открыть PDF"
+                : "Добавьте ссылку на PDF при редактировании"
+            }
           >
-            Читать
-          </button>
-          <button className="book-action-btn" onClick={() => onEdit?.(book)}>
-            Редактировать
+            ▶ Читать
           </button>
           <button
+            type="button"
+            className="book-action-btn"
+            onClick={() => onEdit?.(book)}
+          >
+            Изменить
+          </button>
+          <button
+            type="button"
             className="book-action-btn danger"
             onClick={() => onDelete?.(book)}
           >
@@ -55,6 +68,6 @@ export default function BookCard({ book, onEdit, onDelete, onRead }) {
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

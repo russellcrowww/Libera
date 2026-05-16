@@ -18,30 +18,6 @@ class BookRepository:
     def get_by_id(self, book_id: int) -> Optional[Book]:
         return self.db.query(Book).filter(Book.id == book_id).first()
 
-    def get_by_category(self, category_id: int) -> List[Book]:
-        return (
-            self.db.query(Book)
-            .filter(Book.category_id == category_id)
-            .order_by(Book.id)
-            .all()
-        )
-
-    def get_by_author(self, author_name: str) -> List[Book]:
-        return (
-            self.db.query(Book)
-            .filter(Book.author == author_name)
-            .order_by(Book.id)
-            .all()
-        )
-
-    def get_by_year(self, year_writing: int) -> List[Book]:
-        return (
-            self.db.query(Book)
-            .filter(Book.year >= year_writing)
-            .order_by(Book.id)
-            .all()
-        )
-
     def get_filtered(
         self,
         genre: Optional[str] = None,

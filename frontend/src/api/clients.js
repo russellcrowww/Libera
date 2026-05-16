@@ -11,16 +11,11 @@ export const getFileUrl = (path) => {
   return `${api.defaults.baseURL}${path}`;
 };
 
-// Books
 export const getBooks = () => api.get("/api/books");
 export const getBooksFiltered = (params) => api.get("/api/books", { params });
-export const getBookById = (id) => api.get(`/api/books/${id}`);
-export const getBooksByCategory = (categoryId) =>
-  api.get(`/api/books/category/${categoryId}`);
 export const createBook = (data) => api.post("/api/books", data);
 export const updateBook = (id, data) => api.put(`/api/books/${id}`, data);
 export const deleteBook = (id) => api.delete(`/api/books/${id}`);
 
-// Categories (read-only)
 export const getCategories = () => api.get("/api/categories");
-export const getCategoryById = (id) => api.get(`/api/categories/${id}`);
+export const createCategory = (data) => api.post("/api/categories", data);

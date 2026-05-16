@@ -40,17 +40,6 @@ class BookService:
             )
         return BookResponse.model_validate(book)
 
-    def get_books_by_category(self, category_id: int) -> BookListResponse:
-        category = self.category_repository.get_by_id(category_id)
-        if not category:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Category with id {category_id} not found"
-            )
-        books = self.book_repository.get_by_category(category_id)
-        books_response = [BookResponse.model_validate(b) for b in books]
-        return BookListResponse(books=books_response, total=len(books_response))
-
     def create_book(self, book_data: BookCreate) -> BookResponse:
         category = self.category_repository.get_by_id(book_data.category_id)
         if not category:

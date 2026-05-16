@@ -33,12 +33,6 @@ def get_all_books(
     )
 
 
-@router.get("/category/{category_id}", response_model=BookListResponse, status_code=status.HTTP_200_OK)
-def get_books_by_category(category_id: int, db: Session = Depends(get_db)):
-    service = BookService(db)
-    return service.get_books_by_category(category_id)
-
-
 @router.get("/{book_id}", response_model=BookResponse, status_code=status.HTTP_200_OK)
 def get_book_by_id(book_id: int, db: Session = Depends(get_db)):
     service = BookService(db)

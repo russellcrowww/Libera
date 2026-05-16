@@ -1,5 +1,6 @@
+from sqlalchemy.exc import IntegrityError
 from ..repositories.Category_repositories import CategoryRepository
-from ..schemas.Category import CategoryResponse
+from ..schemas.Category import CategoryResponse, CategoryCreate
 from fastapi import HTTPException, status
 
 
@@ -11,11 +12,13 @@ class CategoryService:
         categories = self.repository.get_all()
         return [CategoryResponse.model_validate(cat) for cat in categories]
 
-    def get_category_by_id(self, category_id: int) -> CategoryResponse:
-        category = self.repository.get_by_id(category_id)
-        if not category:
+    def create_category(self, category_data: CategoryCreate) -> CategoryResponse:
+        try:
+            category = self.repository.create(category_data)
+        except IntegrityError:
+            self.repository.db.rollback()
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f'Category with id {category_id} not found'
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Категория «{category_data.name}» уже существует",
             )
         return CategoryResponse.model_validate(category)
